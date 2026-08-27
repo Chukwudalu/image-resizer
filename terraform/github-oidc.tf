@@ -15,9 +15,10 @@ resource "aws_iam_role" "github_actions" {
                 StringEquals = {
                     "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
                 }
-                StringLike = { 
-                "token.actions.githubusercontent.com:sub" = "repo:Chukwudalu/image-resizer:ref:refs/heads/main"
+                StringLike = {
+                "token.actions.githubusercontent.com:sub" = "repo:Chukwudalu@28521165/image-resizer@1344565173:ref:refs/heads/main"
                 }
+
             }
         }]
     })
