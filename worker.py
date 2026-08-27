@@ -1,5 +1,6 @@
 import json
 import os
+import signal
 import tempfile
 import time
 import boto3
@@ -47,9 +48,18 @@ def process_message(message):
             print(f"Uploaded s3://{BUCKET}/{s3_key}")
 
 
+
 def main():
     print("Worker started, polling for messages...")
-    while True:
+    running = True
+    def handle_sigterm(signum, frame):
+        nonlocal running
+        print("SIGTERM received, shutting down after current iteration...")
+        running = False
+
+    signal.signal(signal.SIGTERM, handle_sigterm)
+    
+    while running:
         response = sqs.receive_message(
             QueueUrl=QUEUE_URL,
             MaxNumberOfMessages=1,
@@ -73,6 +83,8 @@ def main():
             emit_metric("ProcessingFailures", 1)
             # SQS redelivers automatically, eventually to the DLQ
             print(f"Failed to process message: {e}")
+
+    print("Worker exiting cleanly.")
 
 
 if __name__ == "__main__":
