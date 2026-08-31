@@ -39,7 +39,7 @@ Separately, whenever code lands on `main`: GitHub Actions authenticates to AWS v
 
 ## A few decisions worth explaining
 
-**The upload API is Lambda, not ECS**, even though the original design put everything in containers. A presigned-URL endpoint is stateless and cheap to call, and running a 24/7 Fargate service and an ALB just to occasionally hand back a signed URL buys nothing. Mixing serverless glue with a container for the actual work is itself a normal, real-world pattern.
+**The upload API is Lambda, not ECS**, even though the original design put everything in containers. A presigned-URL endpoint is stateless and cheap to call, and running a 24/7 Fargate service and an ALB just to occasionally hand back a signed URL means nothing.
 
 **There's no load balancer anywhere in this architecture**, on purpose. ALB solves "route inbound client requests across several servers," and nothing here has that shape. API Gateway is already the public front door for Lambda, and the worker never receives inbound traffic at all; it only ever reaches *out* to SQS. When multiple worker tasks eventually run at once, SQS itself distributes the work: no load balancer needed to "share" a queue.
 
@@ -99,4 +99,3 @@ terraform destroy
 
 Built and verified end-to-end: local resize logic, S3/SQS infrastructure, a containerized worker running on Fargate with a scoped task role, a presigned-upload API with CORS, full VPC networking with the worker in private subnets, a working CI/CD pipeline via OIDC, and CloudWatch alarms + target-tracking autoscaling (confirmed reacting to real metric data).
 
-Not yet built: a small always-on "showcase" deployment separate from the learning stack, a CloudWatch dashboard, and a frontend for uploading/viewing images without the CLI.
