@@ -70,6 +70,11 @@ resource "aws_cloudwatch_log_group" "worker" {
 
 resource "aws_ecs_cluster" "main" {
   name = "image-pipeline-cluster"
+
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
 }
 
 resource "aws_ecs_task_definition" "worker" {
