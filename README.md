@@ -37,17 +37,6 @@ Separately, whenever code lands on `main`: GitHub Actions authenticates to AWS v
 | Observability | CloudWatch custom metrics + alarms | The worker emits its own metrics; alarms watch queue depth, DLQ arrivals, and computed error rate |
 | Autoscaling | Application Auto Scaling, target tracking | Scales on *backlog per running task*, not a flat queue-depth number |
 
-## A few decisions worth explaining
-
-**The upload API is Lambda, not ECS**, even though the original design put everything in containers. A presigned-URL endpoint is stateless and cheap to call, and running a 24/7 Fargate service and an ALB just to occasionally hand back a signed URL means nothing.
-
-**There's no load balancer anywhere in this architecture**, on purpose. ALB solves "route inbound client requests across several servers," and nothing here has that shape. API Gateway is already the public front door for Lambda, and the worker never receives inbound traffic at all; it only ever reaches *out* to SQS. When multiple worker tasks eventually run at once, SQS itself distributes the work: no load balancer needed to "share" a queue.
-
-**The worker never holds a static AWS credential.** It runs under an ECS task role, which hands it short-lived, auto-rotating credentials with exactly three permissions: read from `uploads/`, write to `processed/`, and the handful of SQS/CloudWatch actions it actually uses. Nothing more.
-
-**Autoscaling tracks backlog-per-task, not raw queue depth.** A flat "if depth > 10, add a worker" rule doesn't know whether 10 messages is nothing or a crisis, since that depends entirely on how many workers already exist. Target tracking asks Application Auto Scaling to keep the ratio (queue depth ÷ running tasks) near 1, and lets AWS work out how many tasks that actually requires.
-
-**Debugging this thing surfaced a few genuinely interesting bugs**: a Terraform security-group replacement that deadlocked because the resource meant to unblock it hadn't been created yet, and a GitHub Actions OIDC trust policy that silently failed because GitHub permanently changes its token's identity claim once an account or repo has ever been renamed. Full writeups, with the actual commands used to diagnose each one, are in [`TROUBLESHOOTING.md`](./TROUBLESHOOTING.md).
 
 ## Project structure
 
