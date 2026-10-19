@@ -89,7 +89,7 @@ docker push <ecr-repo-url>:latest
 
 From there, pushing to `main` on GitHub takes over: tests run, a new image builds and pushes, and the ECS service redeploys automatically.
 
-To tear everything down between sessions (this project treats that as a habit, not an afterthought, since a NAT Gateway per AZ isn't free if left running):
+To tear everything down between sessions:
 
 ```bash
 terraform destroy
